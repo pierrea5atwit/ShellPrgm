@@ -2,6 +2,17 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g -std=c11
 LDFLAGS = 
 
+# Detect OS
+ifeq ($(OS),Windows_NT)
+    DETECTED_OS := Windows
+    SHELL_SRC = windows_shell.c
+    MAIN_BIN = shell.exe
+else
+    DETECTED_OS := $(shell uname -s)
+    SHELL_SRC = unix_shell.c
+    MAIN_BIN = shell
+endif
+
 # Directories
 SRC_DIR = .
 TEST_DIR = tests
@@ -9,25 +20,30 @@ BUILD_DIR = build
 
 # Source files
 MAIN_SRC = main.c
-UNIX_SHELL_SRC = unix_shell.c
-SRCS = $(MAIN_SRC) $(UNIX_SHELL_SRC)
+SRCS = $(MAIN_SRC) $(SHELL_SRC)
 OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRCS))
 TEST_SRCS = $(wildcard $(TEST_DIR)/*.c)
 TEST_BINS = $(patsubst $(TEST_DIR)/%.c,$(BUILD_DIR)/%,$(TEST_SRCS))
 
 # Main executable
-MAIN_BIN = $(BUILD_DIR)/shell
+MAIN_BIN_PATH = $(BUILD_DIR)/$(MAIN_BIN)
 
-.PHONY: all clean test run dirs
+.PHONY: all clean test run dirs info
 
-all: dirs $(MAIN_BIN)
+all: dirs info $(MAIN_BIN_PATH)
+
+# Show build info
+info:
+	@echo "Building for: $(DETECTED_OS)"
+	@echo "Shell implementation: $(SHELL_SRC)"
+	@echo ""
 
 # Create build directory
 dirs:
 	@mkdir -p $(BUILD_DIR)
 
 # Build main shell program
-$(MAIN_BIN): $(OBJS) | dirs
+$(MAIN_BIN_PATH): $(OBJS) | dirs
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Compile object files
@@ -47,8 +63,8 @@ test: dirs $(TEST_BINS)
 		echo ""; \
 		./$$test || exit 1; \
 	done
-	@echo ""
-	@echo "==================================="
+	@echo ""_PATH)
+	./$(MAIN_BIN_PATH=============================="
 	@echo "All test suites passed!"
 	@echo "==================================="
 

@@ -1,70 +1,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include "unix_shell.h"
-#include "windows_shell.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+    #include "windows_shell.h"
+#else
+    #include <unistd.h>
+    #include "unix_shell.h"
+#endif
 
 /**
- * 
+ * Driver program - directs user to proper shell implementation according to OS
  */
-int main( ){
-    char input[ MAX_IN ];
-    char* args[ MAX_ARGS ];
-
-    // init input loop
-    int i = 0;
-    while(i < 60) {
-        printf("FSH>");
-        fflush( stdout ); // clear output buffer
-
-        // take whole line as std in
-        if( fgets( input, sizeof( input ), stdin ) == NULL ){
-            perror("fgets failed");
-            return 1;
-        }
-        
-        input[ strcspn( input, "\n") ] = '\0';
-        printf("%s\n", input);
-
-        // exit cmd
-        if( strcmp( input, "exit") ){
-            printf("Exiting...");
-            return 2;
-        }
-
-        // tokenize the command & list of args, up to max limit
-        char* token = strtok( input, " " );
-        int j = 0;
-        while( token != NULL && j < MAX_ARGS ){
-            args[j++] = token;
-
-            // strtok returns a ptr to the next separation if not called on a new var
-            token = strtok( NULL, " " );
-        }
-
-        // pid split
-        pid_t pid = fork();
-        if ( pid == 0 ){ // child
-            execvp( args[0], args );
-            perror("Execv failiure");
-            return 1;
-        }
-        else if ( pid == -1 ){ // fail
-            perror("Process failiure");
-            return -1;
-        }
-        else{ // parent
-            int status;
-            waitpid( pid, &status, 0 );
-            printf("Exit stauts: %d", status);
-        }
-        // everything after the first real char
-
-        i++;
-    }
-
-
-    return 0;
+int main(void) {
+    int exit_status;
+    
+    #if defined(_WIN32) || defined(_WIN64)
+        printf("Starting Windows Shell...\n");
+        exit_status = run_windows_shell();
+    #else
+        printf("Starting Unix Shell...\n");
+        exit_status = run_unix_shell();
+    #endif
+    
+    return exit_status;
 }

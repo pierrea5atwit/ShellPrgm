@@ -27,7 +27,7 @@ void build_command_line(char* args[], char* cmd_line, size_t max_len) {
 }
 
 // Windows shell program using native APIs
-int main( ){
+int run_windows_shell( ){
     char input[ MAX_IN ];
     char* args[ MAX_ARGS ];
     char cmd_line[ MAX_CMD_LINE ];
