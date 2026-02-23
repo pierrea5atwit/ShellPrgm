@@ -1,0 +1,80 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
+        compiler: [gcc, clang]
+        
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+    
+    - name: Set compiler
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          echo "CC=gcc" >> $GITHUB_ENV
+        else
+          echo "CC=clang" >> $GITHUB_ENV
+        fi
+    
+    - name: Build shell program
+      run: make all
+    
+    - name: Run tests
+      run: make test
+    
+    - name: Check for memory leaks (GCC only)
+      if: matrix.compiler == 'gcc'
+      run: |
+        sudo apt-get install -y valgrind
+        # Build tests
+        make clean && make test
+        # Run valgrind on test binaries
+        for test in build/test_*; do
+          echo "Running valgrind on $test"
+          valgrind --leak-check=full --error-exitcode=1 ./$test || exit 1
+        done
+    
+    - name: Upload build artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-${{ matrix.os }}-${{ matrix.compiler }}
+        path: |
+          build/
+          *.log
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install cppcheck
+      run: sudo apt-get update && sudo apt-get install -y cppcheck
+    
+    - name: Run static analysis
+      run: |
+        cppcheck --enable=all --suppress=missingIncludeSystem \
+          --error-exitcode=1 --std=c11 \
+          main.c tests/*.c
+    
+    - name: Check code formatting
+      run: |
+        sudo apt-get install -y clang-format
+        # Check if code is formatted (don't fail, just warn)
+        clang-format --dry-run --Werror main.c tests/*.c || true

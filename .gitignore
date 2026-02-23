@@ -1,0 +1,47 @@
+# Build directory
+build/
+*.o
+*.out
+*.exe
+
+# Executables
+main
+shell
+test_shell
+test_integration
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Valgrind output
+*.log
+vgcore.*
+
+# Editor files
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Compiled Object files
+*.slo
+*.lo
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+
+# Shared objects
+*.dll
+*.so
+*.dylib

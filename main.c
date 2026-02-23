@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #define MAX_IN 1024
 #define MAX_ARGS 64
@@ -41,6 +43,22 @@ int main( ){
             token = strtok( NULL, " " );
         }
 
+        // pid split
+        pid_t pid = fork();
+        if ( pid == 0 ){ // child
+            execvp( args[0], args );
+            perror("Execv failiure");
+            return 1;
+        }
+        else if ( pid == -1 ){ // fail
+            perror("Process failiure");
+            return -1;
+        }
+        else{ // parent
+            int status;
+            waitpid( pid, &status, 0 );
+            printf("Exit stauts: %d", status);
+        }
         // everything after the first real char
 
         i++;
