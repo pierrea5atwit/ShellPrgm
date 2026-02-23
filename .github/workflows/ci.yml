@@ -7,18 +7,27 @@ on:
     branches: [ main, master, develop ]
 
 jobs:
-  build-and-test:
+  # Linux/Unix testing
+  test-unix:
+    name: Test on ${{ matrix.os }} with ${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
     
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-20.04]
+        os: [ubuntu-latest, ubuntu-20.04, macos-latest]
         compiler: [gcc, clang]
+        exclude:
+          # Skip clang on macOS as it's the default
+          - os: macos-latest
+            compiler: gcc
         
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
     
-    - name: Install dependencies
+    - name: Install dependencies (Ubuntu)
+      if: startsWith(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential
@@ -31,50 +40,127 @@ jobs:
           echo "CC=clang" >> $GITHUB_ENV
         fi
     
+    - name: Show build configuration
+      run: |
+        echo "OS: $(uname -s)"
+        echo "Compiler: $CC"
+        $CC --version
+    
     - name: Build shell program
       run: make all
     
-    - name: Run tests
+    - name: Build tests
       run: make test
     
-    - name: Check for memory leaks (GCC only)
-      if: matrix.compiler == 'gcc'
+    - name: Run test suite
+      run: |
+        chmod +x tests/run_tests.sh
+        ./tests/run_tests.sh
+    
+    - name: Check for memory leaks (GCC on Ubuntu only)
+      if: matrix.compiler == 'gcc' && startsWith(matrix.os, 'ubuntu')
       run: |
         sudo apt-get install -y valgrind
-        # Build tests
-        make clean && make test
-        # Run valgrind on test binaries
+        echo "Running Valgrind memory leak checks..."
         for test in build/test_*; do
-          echo "Running valgrind on $test"
-          valgrind --leak-check=full --error-exitcode=1 ./$test || exit 1
+          if [ -f "$test" ]; then
+            echo "Checking $test for memory leaks..."
+            valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all $test
+          fi
         done
     
-    - name: Upload build artifacts
+    - name: Upload test artifacts
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: build-${{ matrix.os }}-${{ matrix.compiler }}
+        name: test-results-${{ matrix.os }}-${{ matrix.compiler }}
         path: |
           build/
           *.log
+        retention-days: 7
 
+  # Windows testing (build only, no POSIX tests)
+  test-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          mingw-w64-x86_64-gcc
+          make
+    
+    - name: Build Windows shell
+      shell: msys2 {0}
+      run: |
+        make all
+        ls -la build/
+    
+    - name: Verify executable
+      shell: msys2 {0}
+      run: |
+        if [ -f "build/shell.exe" ]; then
+          echo "✓ Windows shell executable built successfully"
+          file build/shell.exe
+        else
+          echo "✗ Build failed - executable not found"
+          exit 1
+        fi
+    
+    - name: Upload Windows build
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-build
+        path: build/shell.exe
+        retention-days: 7
+
+  # Code quality checks
   code-quality:
+    name: Code Quality Analysis
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
     
-    - name: Install cppcheck
-      run: sudo apt-get update && sudo apt-get install -y cppcheck
+    - name: Install analysis tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck clang-format
     
     - name: Run static analysis
       run: |
+        echo "Running cppcheck..."
         cppcheck --enable=all --suppress=missingIncludeSystem \
           --error-exitcode=1 --std=c11 \
-          main.c tests/*.c
+          --inline-suppr \
+          main.c unix_shell.c windows_shell.c tests/*.c
     
     - name: Check code formatting
       run: |
-        sudo apt-get install -y clang-format
-        # Check if code is formatted (don't fail, just warn)
-        clang-format --dry-run --Werror main.c tests/*.c || true
+        echo "Checking code formatting..."
+        # Check if code follows formatting style (warning only)
+        clang-format --dry-run --Werror \
+          main.c unix_shell.c windows_shell.c \
+          unix_shell.h windows_shell.h \
+          tests/*.c || echo "⚠ Code formatting issues found (non-blocking)"
+    
+    - name: Check for common issues
+      run: |
+        echo "Checking for common issues..."
+        # Check for TODO/FIXME comments
+        grep -rn "TODO\|FIXME" *.c *.h tests/*.c || echo "✓ No TODO/FIXME found"
+        
+        # Check for trailing whitespace
+        if grep -rn "[[:blank:]]$" *.c *.h tests/*.c; then
+          echo "⚠ Trailing whitespace found"
+        else
+          echo "✓ No trailing whitespace"
+        fi

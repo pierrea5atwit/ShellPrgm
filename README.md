@@ -58,21 +58,46 @@ FSH> exit
 
 ## Testing
 
-The project includes comprehensive unit and integration tests:
+The project includes comprehensive unit and integration tests for Unix/Linux/macOS platforms.
+
+### Run Tests Locally
 
 ```bash
+# Build and run all tests
 make test
+
+# Or use the test runner
+chmod +x tests/run_tests.sh
+./tests/run_tests.sh
 ```
 
-See [tests/TESTING.md](tests/TESTING.md) for more.
+**Note:** Tests require POSIX APIs and cannot run on native Windows. Use WSL or see test results in GitHub Actions.
+
+### Test Coverage
+
+- **Unit Tests**: fork(), execvp(), waitpid(), string parsing
+- **Integration Tests**: Real command execution (ls, pwd, echo)
+- **Memory Checks**: Valgrind leak detection (CI only)
+
+See [tests/TESTING.md](tests/TESTING.md) for detailed testing documentation.
 
 ## CI/CD
 
-GitHub Actions will be able to:
-- Build on Ubuntu with GCC and Clang
-- Run all tests
-- Check for memory leaks with Valgrind
-- Perform static analysis with cppcheck
+GitHub Actions automatically tests every push and pull request:
+
+| Platform | Compiler | Tests | Memory Check |
+|----------|----------|-------|--------------|
+| Ubuntu Latest | GCC | ✓ | ✓ Valgrind |
+| Ubuntu Latest | Clang | ✓ | - |
+| Ubuntu 20.04 | GCC | ✓ | ✓ Valgrind |
+| Ubuntu 20.04 | Clang | ✓ | - |
+| macOS Latest | Clang | ✓ | - |
+| Windows Latest | GCC | Build Only | - |
+
+**Additional Checks:**
+- Static analysis with cppcheck
+- Code formatting checks
+- Build artifact uploads
 
 ## Development
 
@@ -86,15 +111,19 @@ GitHub Actions will be able to:
 
 ```
 .
-├── main.c                   # Main shell program
-├── tests/                   # Test directory
-│   ├── test_shell.c         # Unit tests
-│   ├── test_integration.c   # Integration tests
-│   └── README.md            # Test documentation
-├── Makefile                 # Build configuration
+├── main.c                      # Platform detection & driver
+├── unix_shell.c/h              # Unix/POSIX shell implementation  
+├── windows_shell.c/h           # Windows native shell implementation
+├── tests/                      # Test directory
+│   ├── test_shell.c            # Unit tests
+│   ├── test_integration.c      # Integration tests
+│   ├── run_tests.sh            # Test runner script
+│   └── TESTING.md              # Test documentation
+├── Makefile                    # Cross-platform build config
+├── .gitignore                  # Git ignore rules
 └── .github/
     └── workflows/
-        └── ci.yml           # GitHub Actions workflow
+        └── ci.yml              # GitHub Actions CI/CD
 ```
 
 ## Known Issues
