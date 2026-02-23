@@ -24,7 +24,7 @@ jobs:
         
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Install dependencies (Ubuntu)
       if: startsWith(matrix.os, 'ubuntu')
@@ -71,7 +71,7 @@ jobs:
     
     - name: Upload test artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-results-${{ matrix.os }}-${{ matrix.compiler }}
         path: |
@@ -86,7 +86,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Setup MSYS2
       uses: msys2/setup-msys2@v2
@@ -115,7 +115,7 @@ jobs:
         fi
     
     - name: Upload Windows build
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-build
         path: build/shell.exe
@@ -128,7 +128,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Install analysis tools
       run: |
