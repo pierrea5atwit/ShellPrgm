@@ -6,14 +6,10 @@ LDFLAGS =
 ifeq ($(OS),Windows_NT)
     DETECTED_OS := Windows
     SHELL_SRC = windows_shell.c
-    RM = del /Q
-    MKDIR = if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
     EXE_EXT = .exe
 else
     DETECTED_OS := $(shell uname -s)
     SHELL_SRC = unix_shell.c
-    RM = rm -f
-    MKDIR = mkdir -p $(BUILD_DIR)
     EXE_EXT = 
 endif
 
@@ -54,7 +50,7 @@ info:
 
 # Create build directory
 dirs:
-	@$(MKDIR)
+	@mkdir -p $(BUILD_DIR)
 
 # Build main shell program
 $(MAIN_BIN): $(OBJS) | dirs
@@ -101,15 +97,9 @@ run: $(MAIN_BIN)
 	@./$(MAIN_BIN)
 
 # Clean build artifacts
-ifeq ($(DETECTED_OS),Windows)
-clean:
-	@if exist $(BUILD_DIR) rmdir /S /Q $(BUILD_DIR)
-	@$(RM) *.exe *.o 2>nul || true
-else
 clean:
 	@rm -rf $(BUILD_DIR)
 	@rm -f *.exe *.out *.o
-endif
 	@echo "Clean complete!"
 
 # Help target

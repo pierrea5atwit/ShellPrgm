@@ -11,7 +11,8 @@
 // Helper function to build command line from args
 void build_command_line(char* args[], char* cmd_line, size_t max_len) {
     cmd_line[0] = '\0';
-    for (int i = 0; args[i] != NULL && i < MAX_ARGS; i++) {
+
+    for (int i = 0; i < MAX_ARGS && args[i] != NULL; i++) {
         if (i > 0) {
             strcat_s(cmd_line, max_len, " ");
         }
@@ -29,7 +30,7 @@ void build_command_line(char* args[], char* cmd_line, size_t max_len) {
 // Windows shell program using native APIs
 int run_windows_shell( ){
     char input[ MAX_IN ];
-    char* args[ MAX_ARGS ];
+    const char* args[ MAX_ARGS ];
     char cmd_line[ MAX_CMD_LINE ];
 
     // init input loop
