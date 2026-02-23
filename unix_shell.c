@@ -2,14 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "unix_shell.h"
-#include "windows_shell.h"
+#include <sys/wait.h>
 
+#define MAX_IN 1024
+#define MAX_ARGS 64
 
-/**
- * 
- */
-int main( ){
+// mock shell program, 1 file
+int run_unix_shell( ){
     char input[ MAX_IN ];
     char* args[ MAX_ARGS ];
 

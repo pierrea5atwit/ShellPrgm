@@ -4,22 +4,22 @@ A simple POSIX-compliant shell implementation in C.
 
 ## Features
 
-- Command-line interface with `FSH>` prompt
+- Command-line interface with `FSH>` prompt, good for executing UNIX cmds
 - Process forking and execution using `fork()` and `execvp()`
 - Command parsing and tokenization
 - Process status monitoring with `waitpid()`
 
 ## Platform Support
 
-⚠️ **This program requires a POSIX-compliant system:**
+**Program does not require a POSIX-compliant system:**
 - ✅ Linux
 - ✅ macOS
 - ✅ WSL (Windows Subsystem for Linux)
-- ❌ Native Windows (MinGW/MSYS2) - `fork()` is not supported
+- ✅ Windows Translation (for MinGW/MSYS2) - `fork()` is not supported natively
 
-### Why it doesn't work on Windows
+### Why Windows requires change
 
-Windows doesn't support POSIX system calls like `fork()`, `execvp()`, and `waitpid()`. These are Unix-specific APIs. To run this program on Windows, use **WSL (Windows Subsystem for Linux)**.
+Windows doesn't support POSIX system calls like `fork()`, `execvp()`, and `waitpid()`. These are Unix-specific APIs.
 
 ## Building
 
@@ -64,15 +64,15 @@ The project includes comprehensive unit and integration tests:
 make test
 ```
 
-See [tests/README.md](tests/README.md) for more details.
+See [tests/TESTING.md](tests/TESTING.md) for more.
 
 ## CI/CD
 
-GitHub Actions automatically:
-- Builds on Ubuntu with GCC and Clang
-- Runs all tests
-- Checks for memory leaks with Valgrind
-- Performs static analysis with cppcheck
+GitHub Actions will be able to:
+- Build on Ubuntu with GCC and Clang
+- Run all tests
+- Check for memory leaks with Valgrind
+- Perform static analysis with cppcheck
 
 ## Development
 
@@ -99,7 +99,7 @@ GitHub Actions automatically:
 
 ## Known Issues
 
-- Exit command behavior needs fixing (currently uses inequality check)
+- Exit cmd behavior needs fixing (currently uses inequality check)
 - Input limited to 60 iterations for safety
 - No built-in command support (cd, etc.)
 

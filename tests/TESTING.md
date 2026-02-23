@@ -34,7 +34,7 @@ gcc -Wall -Wextra -g -std=c11 tests/test_shell.c -o test_shell
 
 ## Test Framework
 
-The tests use a simple custom test framework with these macros:
+Tests use a simple custom test framework with these macros:
 
 - `TEST(name)` - Define a test function
 - `RUN_TEST(test)` - Execute a test
@@ -63,4 +63,4 @@ Tests are automatically run on every push and pull request via GitHub Actions. T
 2. Include the necessary test macros
 3. Write test functions using `TEST(name)` macro
 4. Add `RUN_TEST()` calls in `main()`
-5. The Makefile will automatically pick up new test files
+5. Makefile will automatically pick up new test files
